@@ -756,7 +756,7 @@ function renderTeamReport() {
       var priority = minCount === 0 ? '紧急' : minCount === 1 ? '高' : '中';
       var html = '<div class="recommendation-title">📌 招聘建议（优先级：' + priority + '）</div><div class="recommendation-content">';
       // 优先招聘类型
-      html += '<strong>优先招聘类型：</strong>' + weaknessList.map(function(w) { return w.type + '（' + w.letter + '）'; }).join(' + ') + '<br>';
+      html += '<strong>优先招聘类型：</strong>' + weaknessList.map(function(w) { return w.type + ' (' + w.letter + ')'; }).join(' + ') + '<br>';
       // 目标画像
       html += '<strong>目标画像：</strong>' + weaknessList.map(function(w) { return w.info.profile; }).join('、') + '<br>';
       // 岗位建议：合并去重
