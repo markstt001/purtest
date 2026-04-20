@@ -752,21 +752,32 @@ function renderTeamReport() {
     });
 
     if (weaknessList.length > 0) {
-      var priority = weaknessList.length >= 3 ? '紧急' : weaknessList.length >= 2 ? '高' : '中';
+      var minCount = Math.min.apply(null, weaknessList.map(function(w) { return w.count; }));
+      var priority = minCount === 0 ? '紧急' : minCount === 1 ? '高' : '中';
       var html = '<div class="recommendation-title">📌 招聘建议（优先级：' + priority + '）</div><div class="recommendation-content">';
-      html += '<strong>优先招聘类型：</strong>';
-      var typeList = weaknessList.map(function(w) { return w.type + '（仅 ' + w.count + ' 人）'; });
-      html += typeList.join('、') + '<br>';
+      // 优先招聘类型
+      html += '<strong>优先招聘类型：</strong>' + weaknessList.map(function(w) { return w.type + '（' + w.letter + '）'; }).join(' + ') + '<br>';
       // 目标画像
-      html += '<strong>目标画像：</strong>';
-      html += weaknessList.map(function(w) { return w.type + ' → ' + w.info.profile; }).join('；') + '<br>';
-      // 岗位建议
-      html += '<strong>岗位建议：</strong>';
-      var jobList = weaknessList.map(function(w) { return w.info.jobs.join('、'); });
-      html += jobList.join('；') + '<br>';
+      html += '<strong>目标画像：</strong>' + weaknessList.map(function(w) { return w.info.profile; }).join('、') + '<br>';
+      // 岗位建议：合并去重
+      var allJobs = [];
+      var seenJobs = {};
+      weaknessList.forEach(function(w) {
+        w.info.jobs.forEach(function(j) { if (!seenJobs[j]) { seenJobs[j] = true; allJobs.push(j); } });
+      });
+      html += '<strong>岗位建议：</strong>' + allJobs.join('、') + '<br>';
       // 面试考察
-      html += '<strong>面试考察：</strong>';
-      html += weaknessList.map(function(w) { return w.info.interview; }).join('<br>');
+      var interviewTraits = [];
+      weaknessList.forEach(function(w) {
+        if (w.letter === 'I' || w.letter === 'P') { interviewTraits.push('市场敏锐度'); interviewTraits.push('创新思维'); interviewTraits.push('快速决策能力'); }
+        else if (w.letter === 'T') { interviewTraits.push('目标导向'); interviewTraits.push('任务推进能力'); }
+        else if (w.letter === 'B') { interviewTraits.push('合作共赢意识'); interviewTraits.push('长期关系建设'); }
+      });
+      // 去重
+      var uniqueTraits = [];
+      var seenTraits = {};
+      interviewTraits.forEach(function(t) { if (!seenTraits[t]) { seenTraits[t] = true; uniqueTraits.push(t); } });
+      html += '<strong>面试考察：</strong>' + '重点考察候选人的' + uniqueTraits.join('、') + '<br>';
       html += '</div>';
       el.innerHTML = html;
     } else {
@@ -857,7 +868,7 @@ function renderTeamReport() {
     html += '<div class="recommendation-title">🧑‍💻 个人发展</div>';
     html += '<div class="recommendation-content">';
     if (personalDev.length > 0) {
-      personalDev.forEach(function(p, i) { html += (i+1) + '. ' + p + '<br>'; });
+      personalDev.forEach(function(p) { html += '• ' + p + '<br>'; });
     } else {
       html += '团队能力全面，建议持续学习和提升。<br>';
     }
