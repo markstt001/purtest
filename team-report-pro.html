@@ -58,8 +58,6 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 .course-name{font-size:15px;font-weight:700;color:#fff;margin-bottom:6px}
 .course-teacher{font-size:12px;color:#86868b;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .course-match{font-size:11px;color:#10b981;margin-bottom:10px;padding:8px;background:rgba(16,185,129,0.1);border-radius:6px}
-.course-price{font-size:20px;font-weight:800;color:#d4af37;display:flex;align-items:center;gap:8px}
-.course-original{font-size:12px;color:#86868b;text-decoration:line-through}
 .recommendation{background:rgba(44,83,100,0.2);padding:16px;border-radius:12px;margin-bottom:16px;border:1px solid rgba(58,106,122,0.3)}
 .recommendation-title{font-size:13px;font-weight:600;color:#d4af37;margin-bottom:10px;display:flex;align-items:center;gap:6px}
 .recommendation-content{font-size:12px;color:#cccccc;line-height:1.8}
@@ -85,6 +83,8 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 </style>
 </head>
 <body>
+
+<!-- Header -->
 <div class="header">
 <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:12px;">
 <button onclick="history.back()" style="background:transparent;border:none;color:#d4af37;font-size:24px;cursor:pointer;padding:0;">←</button>
@@ -93,280 +93,88 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 </div>
 <div class="title" style="margin-top:12px;">📊 团队配置报告</div>
 <div class="subtitle">采购谈判基因 · 深度分析版</div>
-<div style="margin-top:16px;font-size:12px;color:#86868b;">报告生成时间：2026-03-28</div>
+<div style="margin-top:16px;font-size:12px;color:#86868b;">报告生成时间：<span id="report-generated">--</span></div>
 </div>
 
+<!-- 效能评分 -->
 <div class="score-box">
 <div class="score-label">团队综合效能评分</div>
-<div class="score-num">87</div>
-<div class="score-desc">🏆 优秀 · 超越 78% 的采购团队</div>
+<div class="score-num" id="score-num">--</div>
+<div class="score-desc" id="score-desc">--</div>
 </div>
 
+<!-- 团队概况 -->
 <div class="card">
 <div class="card-title pro">👥 团队概况</div>
 <div class="tag-row">
-<span class="tag">5 人团队</span>
+<span class="tag" id="tag-team-size">--</span>
 <span class="tag">100% 已测试</span>
-<span class="tag">互补型</span>
+<span id="team-type-tag" class="tag">--</span>
 </div>
 <div class="stats" style="margin-top:16px;">
-<div class="stat"><div class="stat-num">5</div><div class="stat-label">总人数</div></div>
-<div class="stat"><div class="stat-num">5</div><div class="stat-label">已测试</div></div>
-<div class="stat"><div class="stat-num">0</div><div class="stat-label">待测试</div></div>
+<div class="stat"><div class="stat-num" id="stat-total">--</div><div class="stat-label">总人数</div></div>
+<div class="stat"><div class="stat-num" id="stat-tested">--</div><div class="stat-label">已测试</div></div>
+<div class="stat"><div class="stat-num" id="stat-pending">--</div><div class="stat-label">待测试</div></div>
 </div>
 <div style="background:rgba(44,83,100,0.2);padding:16px;border-radius:12px;margin-top:16px;">
 <div style="font-size:12px;color:#86868b;margin-bottom:8px;">团队类型判定</div>
-<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;">🔀 互补型团队</div>
-<div style="font-size:12px;color:#cccccc;line-height:1.7;">成员风格多样，优势互补，协作潜力大。建议加强跨风格沟通，最大化协同效应。</div>
+<div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:6px;" id="team-type">--</div>
+<div style="font-size:12px;color:#cccccc;line-height:1.7;" id="team-type-desc">--</div>
 </div>
 </div>
 
+<!-- 四维度深度分析 -->
 <div class="section">
 <div class="section-title">📐 四维度深度分析</div>
-
-<div class="dimension">
-<div class="dimension-name">🧠 信息获取维度</div>
-<div class="dimension-bars">
-<div class="bar-item"><div class="bar-label">分析型 (A) <span class="bar-value">3 人 · 60%</span></div><div class="bar-bg"><div class="bar-fill majority" style="width:60%"></div></div></div>
-<div class="bar-item"><div class="bar-label">直觉型 (I) <span class="bar-value">2 人 · 40%</span></div><div class="bar-bg"><div class="bar-fill" style="width:40%"></div></div></div>
-</div>
-<div class="insight-box" style="margin-top:12px;">
-<div class="insight-title">💡 维度洞察</div>
-<div class="insight-content">团队偏向分析型决策，重视数据和逻辑。优势在于方案论证充分，风险识别准确；需注意避免过度分析导致决策延迟，建议为直觉型成员创造表达洞察的空间。</div>
-</div>
+<div id="dimension-bars-container"></div>
 </div>
 
-<div class="dimension">
-<div class="dimension-name">🎯 决策导向维度</div>
-<div class="dimension-bars">
-<div class="bar-item"><div class="bar-label">关系型 (R) <span class="bar-value">3 人 · 60%</span></div><div class="bar-bg"><div class="bar-fill majority" style="width:60%"></div></div></div>
-<div class="bar-item"><div class="bar-label">任务型 (T) <span class="bar-value">2 人 · 40%</span></div><div class="bar-bg"><div class="bar-fill" style="width:40%"></div></div></div>
-</div>
-<div class="insight-box" style="margin-top:12px;">
-<div class="insight-title">💡 维度洞察</div>
-<div class="insight-content">关系导向占优，团队氛围和谐，善于维护供应商关系。需平衡关系维护与任务达成，避免因人情影响谈判底线。建议任务型成员在关键节点推动进度。</div>
-</div>
-</div>
-
-<div class="dimension">
-<div class="dimension-name">⚔️ 处事方式维度</div>
-<div class="dimension-bars">
-<div class="bar-item"><div class="bar-label">竞争型 (C) <span class="bar-value">3 人 · 60%</span></div><div class="bar-bg"><div class="bar-fill majority" style="width:60%"></div></div></div>
-<div class="bar-item"><div class="bar-label">合作型 (B) <span class="bar-value">2 人 · 40%</span></div><div class="bar-bg"><div class="bar-fill" style="width:40%"></div></div></div>
-</div>
-<div class="insight-box" style="margin-top:12px;">
-<div class="insight-title">💡 维度洞察</div>
-<div class="insight-content">竞争意识较强，善于争取利益最大化。在供应商谈判中不易吃亏，但需注意长期合作关系的维护。建议合作型成员在战略供应商管理中发挥主导作用。</div>
-</div>
-</div>
-
-<div class="dimension">
-<div class="dimension-name">🚀 行动策略维度</div>
-<div class="dimension-bars">
-<div class="bar-item"><div class="bar-label">防御型 (D) <span class="bar-value">3 人 · 60%</span></div><div class="bar-bg"><div class="bar-fill majority" style="width:60%"></div></div></div>
-<div class="bar-item"><div class="bar-label">开拓型 (P) <span class="bar-value">2 人 · 40%</span></div><div class="bar-bg"><div class="bar-fill" style="width:40%"></div></div></div>
-</div>
-<div class="insight-box" style="margin-top:12px;">
-<div class="insight-title">💡 维度洞察</div>
-<div class="insight-content">防御型居多，风险管控意识强，决策谨慎。优势在于规避陷阱，但可能错失市场机会。建议为开拓型成员授权创新试点项目，平衡稳健与敏捷。</div>
-</div>
-</div>
-</div>
-
+<!-- 团队核心优势 -->
 <div class="card">
 <div class="card-title pro">✅ 团队核心优势</div>
-<div class="advantage">
-<div class="advantage-title">📊 数据分析能力强</div>
-<div class="advantage-desc">团队中 60% 成员是分析型，决策时有数据支撑，不易冲动。善于收集市场信息、进行成本分析和风险评估。</div>
-<div class="advantage-impact">💼 业务影响：在供应商评估、价格谈判、合同审核等环节表现优异，能有效降低采购风险。</div>
-</div>
-<div class="advantage">
-<div class="advantage-title">🤝 关系维护能力好</div>
-<div class="advantage-desc">团队中 60% 成员是关系导向，善于维护供应商关系和内部协调。注重长期合作，善于化解冲突。</div>
-<div class="advantage-impact">💼 业务影响：供应商满意度高，紧急情况下能获得供应商支持，内部跨部门协作顺畅。</div>
-</div>
-<div class="advantage">
-<div class="advantage-title">⚔️ 竞争意识强</div>
-<div class="advantage-desc">团队中 60% 成员是竞争型，在谈判中善于争取最大利益。不甘示弱，敢于施压，底线意识强。</div>
-<div class="advantage-impact">💼 业务影响：谈判成果优异，采购成本可控，合同条款有利于我方，不易被供应商牵着鼻子走。</div>
-</div>
-<div class="advantage">
-<div class="advantage-title">🛡️ 风险控制能力强</div>
-<div class="advantage-desc">团队中 60% 成员是防御型，谨慎保守，善于识别和规避风险。决策前充分论证，不盲目行动。</div>
-<div class="advantage-impact">💼 业务影响：采购合规性高，合同风险低，供应链稳定性强，极少出现重大失误。</div>
-</div>
+<div id="advantages-container"></div>
 </div>
 
+<!-- 潜在风险与改进方案 -->
 <div class="card">
 <div class="card-title pro">⚠️ 潜在风险与改进方案</div>
-<div class="risk">
-<div class="risk-title">💭 直觉型成员不足</div>
-<div class="risk-desc">团队中直觉型成员只有 2 人（40%），可能影响创新思维和市场机会识别。过度依赖数据可能导致错失非量化机会。</div>
-<div class="risk-alert">⚠️ 风险场景：新兴市场进入、创新品类采购、供应商早期介入等需要直觉判断的场景可能表现欠佳。</div>
-<div class="risk-solution">✅ 改进方案：1) 为直觉型成员（李四、钱七）创造更多表达洞察的机会；2) 引入外部行业专家顾问；3) 建立市场情报收集机制，补充数据盲区。</div>
-</div>
-<div class="risk">
-<div class="risk-title">🚀 开拓型成员不足</div>
-<div class="risk-desc">团队中开拓型成员只有 2 人（40%），可能影响快速行动和敏捷响应。过度谨慎可能错失市场窗口期。</div>
-<div class="risk-alert">⚠️ 风险场景：紧急采购、价格波动应对、供应商切换等需要快速决策的场景可能反应迟缓。</div>
-<div class="risk-solution">✅ 改进方案：1) 为开拓型成员（李四、赵六）授权快速决策权限；2) 建立分级决策机制，小额采购简化流程；3) 定期复盘决策速度，持续优化。</div>
-</div>
-<div class="risk">
-<div class="risk-title">📋 任务型成员不足</div>
-<div class="risk-desc">团队中任务型成员只有 2 人（40%），可能影响执行效率和目标达成。过度关注关系可能影响谈判底线。</div>
-<div class="risk-alert">⚠️ 风险场景：成本削减项目、供应商绩效考核、合同到期重谈等需要强硬立场的场景可能妥协过多。</div>
-<div class="risk-solution">✅ 改进方案：1) 任务型成员（赵六、李四）主导 KPI 考核和成本削减项目；2) 建立明确的谈判底线和授权机制；3) 引入第三方评估，避免人情干扰。</div>
-</div>
+<div id="risks-container"></div>
 </div>
 
+<!-- 最佳拍档配对建议 -->
 <div class="card">
 <div class="card-title pro">🤝 最佳拍档配对建议</div>
-<div class="pair">
-<div class="pair-title">💕 天作之合 · 高度互补</div>
-<div class="pair-members">
-<div class="pair-member"><div class="pair-avatar">🦉</div><div class="pair-name">张三</div><div class="pair-code">ARCD</div></div>
-<div style="font-size:20px;color:#86868b;">+</div>
-<div class="pair-member"><div class="pair-avatar">🐺</div><div class="pair-name">李四</div><div class="pair-code">ITCP</div></div>
-</div>
-<div class="pair-reason"><strong>互补维度：</strong>4 个维度全部不同（A/I、R/T、C/B、D/P）<br><strong>协作价值：</strong>张三的数据分析 + 李四的直觉洞察 = 全面决策；张三的防御谨慎 + 李四的开拓敏捷 = 平衡风险与速度<br><strong>推荐场景：</strong>战略供应商选择、重大合同谈判、成本优化项目</div>
-</div>
-<div class="pair">
-<div class="pair-title">🤝 互补合作 · 中度互补</div>
-<div class="pair-members">
-<div class="pair-member"><div class="pair-avatar">🦉</div><div class="pair-name">王五</div><div class="pair-code">ARBP</div></div>
-<div style="font-size:20px;color:#86868b;">+</div>
-<div class="pair-member"><div class="pair-avatar">🦅</div><div class="pair-name">赵六</div><div class="pair-code">ATCD</div></div>
-</div>
-<div class="pair-reason"><strong>互补维度：</strong>2 个维度不同（R/T、B/C）<br><strong>协作价值：</strong>王五的关系维护 + 赵六的任务执行 = 刚柔并济；王五的合作共赢 + 赵六的竞争意识 = 平衡短期利益与长期关系<br><strong>推荐场景：</strong>供应商绩效管理、合同执行监控、日常采购运营</div>
-</div>
+<div id="pairs-container"></div>
 </div>
 
+<!-- 团队成员画像 -->
 <div class="card">
 <div class="card-title pro">📋 团队成员画像</div>
-<div class="member">
-<div class="avatar">张</div>
-<div class="member-info">
-<div class="member-name">张三 · ARCD 数据军师 🦉</div>
-<div class="member-code">分析 + 关系 + 竞争 + 防御</div>
-</div>
-<div class="member-status">✅ 核心骨干</div>
-</div>
-<div class="member">
-<div class="avatar">李</div>
-<div class="member-info">
-<div class="member-name">李四 · ITCP 社交牛人 🐺</div>
-<div class="member-code">直觉 + 任务 + 竞争 + 开拓</div>
-</div>
-<div class="member-status">✅ 创新先锋</div>
-</div>
-<div class="member">
-<div class="avatar">王</div>
-<div class="member-info">
-<div class="member-name">王五 · ARBP 流程管家 🦉</div>
-<div class="member-code">分析 + 关系 + 合作 + 开拓</div>
-</div>
-<div class="member-status">✅ 运营中坚</div>
-</div>
-<div class="member">
-<div class="avatar">赵</div>
-<div class="member-info">
-<div class="member-name">赵六 · ATCD 市场猎手 🦅</div>
-<div class="member-code">分析 + 任务 + 竞争 + 防御</div>
-</div>
-<div class="member-status">✅ 谈判主力</div>
-</div>
-<div class="member">
-<div class="avatar">钱</div>
-<div class="member-info">
-<div class="member-name">钱七 · IRCD 直觉玩家 🦊</div>
-<div class="member-code">直觉 + 关系 + 竞争 + 防御</div>
-</div>
-<div class="member-status">✅ 洞察补充</div>
-</div>
+<div id="members-container"></div>
 </div>
 
+<!-- 发展建议与行动计划 -->
 <div class="card">
 <div class="card-title pro">💡 发展建议与行动计划</div>
 
-<div class="recommendation">
-<div class="recommendation-title">📌 招聘建议（优先级：高）</div>
-<div class="recommendation-content">
-<strong>优先招聘类型：</strong>直觉型 (I) + 开拓型 (P)<br>
-<strong>目标画像：</strong>ITCP（社交牛人）或 IRCP（机会捕手）<br>
-<strong>岗位建议：</strong>采购创新岗、市场情报岗、战略寻源岗<br>
-<strong>面试考察：</strong>重点考察候选人的市场敏锐度、创新思维、快速决策能力
-</div>
-</div>
-
-<div class="recommendation">
-<div class="recommendation-title">📚 培训建议（优先级：中）</div>
-<div class="recommendation-content">
-<strong>团队培训：</strong><br>
-1. 创新思维训练 - 提升直觉洞察能力（推荐：设计思维工作坊）<br>
-2. 敏捷决策工作坊 - 平衡风险与速度（推荐：OODA 循环训练）<br>
-3. 跨风格沟通 - 促进 A/I、D/P 相互理解（推荐：DISC 或 MBTI 培训）<br><br>
-<strong>个人发展：</strong><br>
-• 张三/王五/钱七：加强快速决策和敏捷响应训练<br>
-• 李四/赵六：加强数据分析深度和风险评估能力
-</div>
-</div>
+<div class="recommendation" id="hiring-recommendation"></div>
+<div class="recommendation" id="training-recommendation"></div>
 
 <div class="action-plan">
 <div class="action-plan-title">🎯 90 天行动计划</div>
-<div class="action-item">
-<div class="action-num">1</div>
-<div class="action-text"><strong>第 1-30 天：</strong>完成团队沟通工作坊，建立跨风格理解；为李四授权创新试点项目</div>
-</div>
-<div class="action-item">
-<div class="action-num">2</div>
-<div class="action-text"><strong>第 31-60 天：</strong>优化决策流程，建立分级授权机制；启动市场情报收集系统</div>
-</div>
-<div class="action-item">
-<div class="action-num">3</div>
-<div class="action-text"><strong>第 61-90 天：</strong>复盘决策速度和准确性；调整人员配置，最大化互补效应</div>
-</div>
+<div id="action-plan-container"></div>
 </div>
 
-<div class="recommendation">
-<div class="recommendation-title">🎯 项目配置建议</div>
-<div class="recommendation-content">
-<strong>数据分析类项目：</strong>张三牵头，赵六配合<br>
-<strong>供应商谈判：</strong>李四主导关系建立，张三负责数据支撑，赵六负责条款博弈<br>
-<strong>创新试点项目：</strong>钱七牵头，王五把控流程风险<br>
-<strong>成本削减项目：</strong>赵六牵头，张三提供数据分析，李四负责供应商沟通<br>
-<strong>战略供应商管理：</strong>王五主导，李四配合维护高层关系
-</div>
-</div>
+<div class="recommendation" id="project-config-container"></div>
 </div>
 
+<!-- 推荐课程 -->
 <div class="card">
 <div class="card-title pro">🎓 推荐课程 · 针对性提升</div>
-<div class="course" onclick="window.open('https://www.ailianruyi.com/#/product/detail?id=5', '_blank')" style="cursor:pointer;">
-<div class="course-name">《采购降本和双赢谈判+AI 应用》</div>
-<div class="course-teacher">👨‍🏫 优链学堂 · 线下课</div>
-<div class="course-match">✅ 匹配需求：数据分析与谈判技巧融合，AI 赋能降本增效</div>
-<div class="course-cta" style="font-size:13px;color:#d4af37;font-weight:600;margin-top:10px;">🔥 立即报名，提升谈判力 ›</div>
-</div>
-<div class="course" onclick="window.open('https://www.ailianruyi.com/#/product/detail?id=4', '_blank')" style="cursor:pointer;">
-<div class="course-name">《决胜供应链》</div>
-<div class="course-teacher">👨‍🏫 优链学堂 · 线下课</div>
-<div class="course-match">✅ 匹配需求：提升谈判博弈能力，争取最大利益</div>
-<div class="course-cta" style="font-size:13px;color:#d4af37;font-weight:600;margin-top:10px;">🔥 立即报名，掌握谈判主动权 ›</div>
-</div>
-<div class="course" onclick="window.open('https://www.ailianruyi.com/#/product/detail?id=8', '_blank')" style="cursor:pointer;">
-<div class="course-name">《供应商管理》</div>
-<div class="course-teacher">👨‍🏫 优链学堂 · 线下课</div>
-<div class="course-match">✅ 匹配需求：关系维护与竞争平衡，战略供应商管理</div>
-<div class="course-cta" style="font-size:13px;color:#d4af37;font-weight:600;margin-top:10px;">🔥 立即报名，构建供应商体系 ›</div>
-</div>
-<div class="course" onclick="window.open('https://www.ailianruyi.com/#/product/detail?id=12', '_blank')" style="cursor:pointer;">
-<div class="course-name">《品类管理》</div>
-<div class="course-teacher">👨‍🏫 优链学堂 · 线下课</div>
-<div class="course-match">✅ 匹配需求：系统化品类策略，数据分析驱动决策</div>
-<div class="course-cta" style="font-size:13px;color:#d4af37;font-weight:600;margin-top:10px;">🔥 立即报名，掌握品类策略 ›</div>
-</div>
+<div id="courses-container"></div>
 </div>
 
+<!-- Footer -->
 <div class="footer">
 <div style="font-size:14px;color:#fff;margin-bottom:8px;">📄 本报告由 采购谈判基因 专业版生成</div>
 <div style="margin-bottom:16px;">完整报告 · 深度洞察 · 可执行建议 · 持续追踪</div>
@@ -375,5 +183,24 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 <button class="btn btn-secondary" onclick="history.back()" style="margin-top:12px;background:linear-gradient(135deg,#2c5364,#d4af37);color:#0f2027;border:none;">← 返回</button>
 <div style="margin-top:24px;font-size:11px;color:#86868b;">© 2026 采购谈判基因 · 优链学堂</div>
 </div>
+
+<!-- 数据文件 -->
+<script src="team-report-data.js"></script>
+<!-- 计算与渲染引擎 -->
+<script src="team-report.js"></script>
+<!-- 初始化 -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof window.renderTeamReport === 'function') {
+    window.renderTeamReport();
+  }
+  // 更新团队类型 tag
+  if (typeof window.calcTeamType === 'function' && window.teamReportData) {
+    var tt = window.calcTeamType(window.teamReportData.members);
+    var el = document.getElementById('team-type-tag');
+    if (el) el.textContent = tt.type;
+  }
+});
+</script>
 </body>
 </html>
