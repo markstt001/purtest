@@ -1,12 +1,12 @@
 /**
- * team-report.js v2.1 — 团队报告计算与渲染引擎
+ * team-report.js v2.2 — 团队报告计算与渲染引擎
  *
- * 修复 v2.1:
- * - 角色定位算法修复：区分核心骨干/创新先锋/运营中坚/谈判主力/洞察补充
- * - 团队类型判定调整：100%独特 → 互补型
- * - 未配对成员独立建议
- * - 已测试比例动态计算
- * - 培训建议关联姜宏锋老师具体课程
+ * v2.2 修复:
+ * 1. 独立角色建议: "发展建议" → "协作建议"
+ * 2. 最佳拍档推荐场景: 动态生成，根据互补维度定制
+ * 3. 招聘建议: 短板优先排序 + 目标画像 + 面试具象化 + 岗位具体化
+ * 4. 培训建议: 回归"团队培训"+"个人发展"两块，不强制挂线下课
+ * 5. 项目配置: 按成员优势分配牵头人，推动协作思维
  */
 
 // ── 16 种谈判风格定义 ──
@@ -58,7 +58,6 @@ function calcTeamType(members) {
   var unique = {};
   members.forEach(function(m) { unique[m.code] = true; });
   var ratio = Object.keys(unique).length / n;
-  // 修复：100%独特 = 互补型（全员风格各异，互补性最强）
   if (ratio >= 1.0)
     return { type: '互补型', icon: '🔀', desc: '成员风格各具特色，优势互补明显。建议建立跨风格沟通机制，最大化协同效应。' };
   if (ratio >= 0.6)
@@ -84,14 +83,8 @@ function calcScore(members, dims) {
   return Math.round(Math.max(40, Math.min(100, raw)));
 }
 
-/**
- * 角色定位 v2.1 — 修复：确保不同成员获得不同角色
- *
- * 基于成员在团队中的独特性（少数派维度数量）+ 风格特征
- */
 function calcRoles(members) {
   var n = members.length;
-  // 统计每个维度每个值的出现次数
   var dimCount = [
     { A: 0, I: 0 }, { R: 0, T: 0 }, { C: 0, B: 0 }, { D: 0, P: 0 }
   ];
@@ -105,22 +98,14 @@ function calcRoles(members) {
     var minorityDims = 0;
     for (var i = 0; i < 4; i++) {
       var c = dimCount[i][code[i]];
-      if (c <= 1) uniqueDims++;       // 团队唯一
-      if (c <= Math.ceil(n / 2)) minorityDims++; // 少数派
+      if (c <= 1) uniqueDims++;
+      if (c <= Math.ceil(n / 2)) minorityDims++;
     }
-
-    // 修复后的角色判定：优先级从高到低
-    // 1) 直觉型独苗 → 洞察补充
     if (code[0] === 'I' && dimCount[0].I === 1) return '洞察补充';
-    // 2) 开拓型独苗 + 少数派维度 >= 2 → 创新先锋
     if (code[3] === 'P' && dimCount[3].P === 1 && minorityDims >= 2) return '创新先锋';
-    // 3) 分析型主导 + 竞争型 → 核心骨干
     if (code[0] === 'A' && code[2] === 'C' && minorityDims >= 2) return '核心骨干';
-    // 4) 竞争 + 防御 → 谈判主力
     if (code[2] === 'C' && code[3] === 'D') return '谈判主力';
-    // 5) 合作 + 开拓 → 运营中坚
     if (code[2] === 'B' && code[3] === 'P') return '运营中坚';
-    // 6) 兜底
     return '协作力量';
   });
 }
@@ -208,37 +193,37 @@ function calcDimensionInsights(dims, n) {
 function calcAdvantages(dims, n) {
   var results = [];
   var map = [
-    [dims.A, dims.I, 'A', '分析型',
+    [dims.A, dims.I, '分析型',
       '团队中 {0}% 成员是分析型，决策时有数据支撑，不易冲动。善于收集市场信息、进行成本分析和风险评估。',
       '💼 业务影响：在供应商评估、价格谈判、合同审核等环节表现优异，能有效降低采购风险。'],
-    [dims.I, dims.A, 'I', '直觉型',
+    [dims.I, dims.A, '直觉型',
       '团队中 {0}% 成员是直觉型，善于发现市场机会和创新方案。对行业趋势敏感，能快速捕捉商机。',
       '💼 业务影响：在新品类开发、供应商早期介入、市场创新等方面表现突出。'],
-    [dims.R, dims.T, 'R', '关系型',
+    [dims.R, dims.T, '关系型',
       '团队中 {0}% 成员是关系导向，善于维护供应商关系和内部协调。注重长期合作，善于化解冲突。',
       '💼 业务影响：供应商满意度高，紧急情况下能获得供应商支持，内部跨部门协作顺畅。'],
-    [dims.T, dims.R, 'T', '任务型',
+    [dims.T, dims.R, '任务型',
       '团队中 {0}% 成员是任务导向，目标明确，执行力强。注重结果和效率，善于推进项目。',
       '💼 业务影响：项目交付准时率高，成本削减目标达成率好，执行效率优异。'],
-    [dims.C, dims.B, 'C', '竞争型',
+    [dims.C, dims.B, '竞争型',
       '团队中 {0}% 成员是竞争型，在谈判中善于争取最大利益。不甘示弱，敢于施压，底线意识强。',
       '💼 业务影响：谈判成果优异，采购成本可控，合同条款有利于我方，不易被供应商牵着鼻子走。'],
-    [dims.B, dims.C, 'B', '合作型',
+    [dims.B, dims.C, '合作型',
       '团队中 {0}% 成员是合作型，善于建立长期合作关系和双赢局面。注重供应商发展，善于协同创新。',
       '💼 业务影响：供应商忠诚度高，联合创新项目多，供应链稳定性强。'],
-    [dims.D, dims.P, 'D', '防御型',
+    [dims.D, dims.P, '防御型',
       '团队中 {0}% 成员是防御型，谨慎保守，善于识别和规避风险。决策前充分论证，不盲目行动。',
       '💼 业务影响：采购合规性高，合同风险低，供应链稳定性强，极少出现重大失误。'],
-    [dims.P, dims.D, 'P', '开拓型',
+    [dims.P, dims.D, '开拓型',
       '团队中 {0}% 成员是开拓型，敢于尝试新方法和新机会。行动敏捷，善于把握市场窗口。',
       '💼 业务影响：创新项目推进快，市场响应迅速，能抓住竞争对手忽略的机会。']
   ];
   map.forEach(function(entry) {
     if (entry[0] > entry[1]) {
       results.push({
-        title: entry[3] + '能力强',
-        desc: entry[4].replace('{0}', Math.round(entry[0] / n * 100)),
-        impact: entry[5]
+        title: entry[2] + '能力强',
+        desc: entry[3].replace('{0}', Math.round(entry[0] / n * 100)),
+        impact: entry[4]
       });
     }
   });
@@ -327,6 +312,9 @@ function calcRisks(dims, n) {
   return results;
 }
 
+/**
+ * calcPairs v2.2 — 修复：推荐场景根据互补维度动态生成
+ */
 function calcPairs(members) {
   var n = members.length;
   if (n < 2) return { pairs: [], unpaired: members.slice() };
@@ -348,27 +336,30 @@ function calcPairs(members) {
     if (used[p.m1.name] || used[p.m2.name]) return;
     used[p.m1.name] = true;
     used[p.m2.name] = true;
-    var diffDims = [];
     var valueParts = [];
+    var sceneTags = [];
     for (var i = 0; i < 4; i++) {
       if (p.m1.code[i] !== p.m2.code[i]) {
         var labels = dimLabels[i];
         var v1 = labels[p.m1.code[i] === labels[0] ? 2 : 3];
         var v2 = labels[p.m2.code[i] === labels[0] ? 2 : 3];
-        diffDims.push(v1 + '/' + v2);
-        if (i === 0) valueParts.push(p.m1.name + '的' + v1 + '思维 + ' + p.m2.name + '的' + v2 + '洞察');
-        else if (i === 1) valueParts.push(p.m1.name + '的' + v1 + '维护 + ' + p.m2.name + '的' + v2 + '执行');
-        else if (i === 2) valueParts.push(p.m1.name + '的' + v1 + '意识 + ' + p.m2.name + '的' + v2 + '共赢');
-        else valueParts.push(p.m1.name + '的' + v1 + '谨慎 + ' + p.m2.name + '的' + v2 + '敏捷');
+        if (i === 0) { valueParts.push(p.m1.name + '的' + v1 + '思维 + ' + p.m2.name + '的' + v2 + '洞察'); sceneTags.push('需要全面视角的决策'); }
+        else if (i === 1) { valueParts.push(p.m1.name + '的' + v1 + '维护 + ' + p.m2.name + '的' + v2 + '执行'); sceneTags.push(i === 1 && (v1 === '关系' || v2 === '关系') ? '供应商关系与商务谈判' : '跨部门协作项目'); }
+        else if (i === 2) { valueParts.push(p.m1.name + '的' + v1 + '意识 + ' + p.m2.name + '的' + v2 + '共赢'); sceneTags.push('价格博弈与条款谈判'); }
+        else { valueParts.push(p.m1.name + '的' + v1 + '谨慎 + ' + p.m2.name + '的' + v2 + '敏捷'); sceneTags.push(v1 === '防御' || v2 === '防御' ? '重大合同风险评估' : '创新试点项目'); }
       }
     }
+    // 去重场景标签
+    var uniqueScenes = [];
+    var seen = {};
+    sceneTags.forEach(function(s) { if (!seen[s]) { seen[s] = true; uniqueScenes.push(s); } });
     var type, icon;
     if (p.complement >= 3) { type = '高度互补'; icon = '💕 天作之合'; }
     else if (p.complement >= 2) { type = '中度互补'; icon = '🤝 互补合作'; }
     else { type = '风格相近'; icon = '👥 默契搭档'; }
     var s1 = styleDefinitions[p.m1.code] || { name: '', animal: '❓' };
     var s2 = styleDefinitions[p.m2.code] || { name: '', animal: '❓' };
-    var reason = '<strong>互补维度：</strong>' + p.complement + ' 个维度不同（' + p.m1.code + ' vs ' + p.m2.code + '）<br><strong>协作价值：</strong>' + valueParts.join(' = 全面决策；') + ' = 平衡风险与收益<br><strong>推荐场景：</strong>战略供应商选择、重大合同谈判、跨部门协作项目';
+    var reason = '<strong>互补维度：</strong>' + p.complement + ' 个维度不同（' + p.m1.code + ' vs ' + p.m2.code + '）<br><strong>协作价值：</strong>' + valueParts.join(' = 全面决策；') + ' = 平衡风险与收益<br><strong>推荐场景：</strong>' + uniqueScenes.join('、');
     results.push({ icon: icon, type: type, m1: p.m1, m2: p.m2, s1: s1, s2: s2, reason: reason });
   });
   var unpaired = [];
@@ -377,7 +368,7 @@ function calcPairs(members) {
 }
 
 /**
- * 未配对成员独立建议 v2.1 新增
+ * calcUnpairedAdvice v2.2 — 修复："发展建议" → "协作建议"
  */
 function calcUnpairedAdvice(unpaired, dims, n) {
   if (!unpaired || unpaired.length === 0) return null;
@@ -399,27 +390,21 @@ function calcUnpairedAdvice(unpaired, dims, n) {
       }
     }
     var advice = {
-      name: m.name,
-      code: m.code,
-      style: s.name,
-      animal: s.animal,
-      uniqueDims: uniqueDims,
-      value: '',
-      suggestion: ''
+      name: m.name, code: m.code, style: s.name, animal: s.animal,
+      uniqueDims: uniqueDims, value: '', advice: ''
     };
-    // 根据独特维度生成价值描述和建议
     if (m.code[0] === 'I' && dimCount[0].I === 1) {
       advice.value = '作为团队中唯一的直觉型成员，' + m.name + '拥有独特的市场洞察力和创新思维，是团队发现新机会的关键角色。';
-      advice.suggestion = '建议：1) 定期分享市场洞察和创新想法；2) 与数据型成员结对，将直觉转化为可执行方案；3) 在战略规划会议中优先发言，激发团队创意思维。';
+      advice.advice = '1) 定期分享市场洞察和创新想法；2) 与数据型成员结对，将直觉转化为可执行方案；3) 在战略规划会议中优先发言，激发团队创意思维。';
     } else if (m.code[3] === 'P' && dimCount[3].P === 1) {
       advice.value = '作为团队中唯一的开拓型成员，' + m.name + '具备快速行动和敏捷响应的能力，是团队抓住市场窗口的关键力量。';
-      advice.suggestion = '建议：1) 在紧急采购和快速决策场景中担任主导；2) 建立"快速通道"机制，减少流程摩擦；3) 与防御型成员配合，平衡速度与风险。';
+      advice.advice = '1) 在紧急采购和快速决策场景中担任主导；2) 建立"快速通道"机制，减少流程摩擦；3) 与防御型成员配合，平衡速度与风险。';
     } else if (uniqueDims.length >= 2) {
       advice.value = m.name + '在 ' + uniqueDims.map(function(d) { return d.label; }).join('、') + ' 方面是团队中的少数派，为团队带来差异化视角。';
-      advice.suggestion = '建议：1) 在对应维度相关的决策中发挥主导作用；2) 与主流风格成员结对，形成互补协作；3) 定期分享独特视角，拓宽团队思路。';
+      advice.advice = '1) 在对应维度相关的决策中发挥主导作用；2) 与主流风格成员结对，形成互补协作；3) 定期分享独特视角，拓宽团队思路。';
     } else {
       advice.value = m.name + '的风格（' + s.name + '）为团队带来独特的协作价值。';
-      advice.suggestion = '建议：1) 主动与不同风格成员沟通，建立跨风格理解；2) 在擅长的场景中发挥主导作用；3) 持续学习，提升综合能力。';
+      advice.advice = '1) 主动与不同风格成员沟通，建立跨风格理解；2) 在擅长的场景中发挥主导作用；3) 持续学习，提升综合能力。';
     }
     results.push(advice);
   });
@@ -432,21 +417,20 @@ function calcActionPlan(risks, dims, n) {
   var phase1 = '完成团队沟通工作坊，建立跨风格理解；';
   if (riskTypes.some(function(t) { return t.indexOf('直觉') !== -1 || t.indexOf('开拓') !== -1; })) {
     phase1 += '为少数派成员授权创新试点项目';
-  } else {
-    phase1 += '建立标准化工作流程';
-  }
+  } else { phase1 += '建立标准化工作流程'; }
   steps.push({ period: '第 1-30 天', text: phase1 });
   var phase2 = '优化决策流程，建立分级授权机制；';
   if (riskTypes.some(function(t) { return t.indexOf('分析') !== -1 || t.indexOf('数据') !== -1; })) {
     phase2 += '启动数据收集和分析系统';
-  } else {
-    phase2 += '启动市场情报收集系统';
-  }
+  } else { phase2 += '启动市场情报收集系统'; }
   steps.push({ period: '第 31-60 天', text: phase2 });
   steps.push({ period: '第 61-90 天', text: '复盘决策速度和准确性；调整人员配置，最大化互补效应' });
   return steps;
 }
 
+/**
+ * calcProjectConfig v2.2 — 修复：按成员优势分配牵头人，推动协作思维
+ */
 function calcProjectConfig(members, dims) {
   var suggestions = [];
   var analyzers = members.filter(function(m) { return m.code[0] === 'A'; });
@@ -458,15 +442,48 @@ function calcProjectConfig(members, dims) {
   var relaters = members.filter(function(m) { return m.code[1] === 'R'; });
   var taskers = members.filter(function(m) { return m.code[1] === 'T'; });
 
-  suggestions.push('<strong>数据分析类项目：</strong>' + (analyzers.length > 0 ? analyzers[0].name + '牵头' : '需要分析型人才') + (analyzers.length > 1 ? '，' + analyzers[1].name + '配合' : ''));
-  suggestions.push('<strong>供应商谈判：</strong>' + (relaters.length > 0 ? relaters[0].name + '主导关系建立' : '') + (analyzers.length > 0 ? '，' + analyzers[0].name + '负责数据支撑' : '') + (competitors.length > 0 ? '，' + competitors[0].name + '负责条款博弈' : ''));
+  // 数据分析类：分析型牵头，搭配竞争型（数据+博弈）
+  if (analyzers.length > 0) {
+    var lead = analyzers[0].name;
+    var partner = (competitors.length > 0 && competitors[0].name !== lead) ? competitors[0].name :
+                  (taskers.length > 0 && taskers[0].name !== lead) ? taskers[0].name :
+                  analyzers.length > 1 ? analyzers[1].name : '团队成员';
+    suggestions.push('<strong>数据分析类项目：</strong>' + lead + '牵头，' + partner + '配合 — 数据支撑驱动理性决策');
+  }
+
+  // 供应商谈判：多角色协作 — 关系建立 + 数据支撑 + 条款博弈
+  var relLead = relaters.length > 0 ? relaters[0].name : '关系型成员';
+  var dataSup = (analyzers.length > 0 && analyzers[0].name !== relLead) ? analyzers[0].name : (analyzers.length > 0 ? analyzers[0].name : '');
+  var compNego = (competitors.length > 0 && competitors[0].name !== relLead && (!dataSup || competitors[0].name !== dataSup)) ? competitors[0].name : '';
+  var negoParts = [relLead + '主导关系建立'];
+  if (dataSup) negoParts.push(dataSup + '负责数据支撑');
+  if (compNego) negoParts.push(compNego + '负责条款博弈');
+  suggestions.push('<strong>供应商谈判：</strong>' + negoParts.join('，') + ' — 协作制胜');
+
+  // 创新试点：直觉型 + 开拓型协作
   if (intuitives.length > 0) {
-    suggestions.push('<strong>创新试点项目：</strong>' + intuitives[0].name + '牵头' + (pioneers.length > 0 ? '，' + pioneers[0].name + '配合开拓' : ''));
+    var innLead = intuitives[0].name;
+    var innPartner = (pioneers.length > 0 && pioneers[0].name !== innLead) ? pioneers[0].name :
+                     (cooperators.length > 0 && cooperators[0].name !== innLead) ? cooperators[0].name : '';
+    suggestions.push('<strong>创新试点项目：</strong>' + innLead + '牵头' + (innPartner ? '，' + innPartner + '把控流程风险' : '') + ' — 洞察驱动创新');
   }
-  suggestions.push('<strong>成本削减项目：</strong>' + (competitors.length > 0 ? competitors[0].name + '牵头' : '') + (taskers.length > 0 ? '，' + taskers[0].name + '推进执行' : ''));
+
+  // 成本削减：竞争型 + 任务型协作
+  if (competitors.length > 0) {
+    var costLead = competitors.length > 1 ? competitors[1].name : competitors[0].name;
+    var costPartner = (taskers.length > 0 && taskers[0].name !== costLead) ? taskers[0].name :
+                      (analyzers.length > 0 && analyzers[0].name !== costLead) ? analyzers[0].name : '';
+    suggestions.push('<strong>成本削减项目：</strong>' + costLead + '牵头' + (costPartner ? '，' + costPartner + '推进执行' : '') + ' — 博弈与效率并重');
+  }
+
+  // 战略供应商管理：合作型主导，关系型配合
   if (cooperators.length > 0) {
-    suggestions.push('<strong>战略供应商管理：</strong>' + cooperators[0].name + '主导' + (relaters.length > 0 ? '，' + relaters[0].name + '配合维护高层关系' : ''));
+    var stratLead = cooperators[0].name;
+    var stratPartner = (relaters.length > 0 && relaters[0].name !== stratLead) ? relaters[0].name :
+                       (intuitives.length > 0 && intuitives[0].name !== stratLead) ? intuitives[0].name : '';
+    suggestions.push('<strong>战略供应商管理：</strong>' + stratLead + '主导' + (stratPartner ? '，' + stratPartner + '配合维护高层关系' : '') + ' — 长期共赢');
   }
+
   return suggestions;
 }
 
@@ -491,7 +508,7 @@ function calcCourseMatch(dims, n, courseLibrary) {
 }
 
 // ══════════════════════════════════════
-//  DOM 渲染模块 v2.1
+//  DOM 渲染模块 v2.2
 // ══════════════════════════════════════
 
 function renderTeamReport() {
@@ -512,21 +529,17 @@ function renderTeamReport() {
   var projectConfig = calcProjectConfig(members, dims);
   var courseMatches = calcCourseMatch(dims, n, data.courseLibrary);
 
-  // 已测试/待测试动态计算
   var testedCount = 0, pendingCount = 0;
   members.forEach(function(m) { if (m.tested !== false) testedCount++; else pendingCount++; });
 
-  // ── 报告生成时间 ──
   var el = document.getElementById('report-generated');
   if (el) el.textContent = data.meta.generatedAt;
 
-  // ── 团队类型判定 ──
   el = document.getElementById('team-type');
   if (el) el.textContent = teamType.icon + ' ' + teamType.type + '团队';
   el = document.getElementById('team-type-desc');
   if (el) el.textContent = teamType.desc;
 
-  // ── 团队概况统计 ──
   el = document.getElementById('stat-total');
   if (el) el.textContent = n;
   el = document.getElementById('stat-tested');
@@ -540,7 +553,6 @@ function renderTeamReport() {
   el = document.getElementById('tag-team-type-label');
   if (el) el.textContent = teamType.type;
 
-  // ── 效能评分 ──
   var percentMap = { '优秀': '78', '良好': '65', '中等': '50', '待提升': '35' };
   var level = score >= 80 ? '优秀' : score >= 65 ? '良好' : score >= 50 ? '中等' : '待提升';
   el = document.getElementById('score-num');
@@ -548,7 +560,6 @@ function renderTeamReport() {
   el = document.getElementById('score-desc');
   if (el) el.textContent = '🏆 ' + level + ' · 超越 ' + (percentMap[level] || '50') + '% 的采购团队';
 
-  // ── 四维度深度分析 ──
   el = document.getElementById('dimension-bars-container');
   if (el) {
     var h = '';
@@ -567,7 +578,6 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // ── 团队核心优势 ──
   el = document.getElementById('advantages-container');
   if (el) {
     var h = '';
@@ -582,7 +592,6 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // ── 潜在风险与改进方案 ──
   el = document.getElementById('risks-container');
   if (el) {
     var h = '';
@@ -597,7 +606,6 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // ── 最佳拍档配对 ──
   el = document.getElementById('pairs-container');
   if (el) {
     var h = '';
@@ -615,7 +623,6 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // ── 未配对成员独立建议 v2.1 新增 ──
   el = document.getElementById('unpaired-container');
   if (el) {
     if (unpairedAdvice && unpairedAdvice.length > 0) {
@@ -625,7 +632,7 @@ function renderTeamReport() {
           '<div class="pair-title">' + u.animal + ' ' + u.name + ' · ' + u.code + ' ' + u.style + ' — 独立角色建议</div>' +
           '<div class="pair-reason">' +
           '<strong>独特价值：</strong>' + u.value + '<br><br>' +
-          '<strong>发展建议：</strong>' + u.suggestion +
+          '<strong>协作建议：</strong>' + u.advice +
           '</div></div>';
       });
       el.innerHTML = h;
@@ -635,7 +642,6 @@ function renderTeamReport() {
     }
   }
 
-  // ── 团队成员画像 ──
   el = document.getElementById('members-container');
   if (el) {
     var h = '';
@@ -653,7 +659,6 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // ── 发展建议与行动计划 ──
   el = document.getElementById('action-plan-container');
   if (el) {
     var h = '';
@@ -666,44 +671,139 @@ function renderTeamReport() {
     el.innerHTML = h;
   }
 
-  // 招聘建议
+  // ── 招聘建议 v2.2 — 短板优先 + 目标画像 + 面试具象化 + 岗位具体化 ──
   el = document.getElementById('hiring-recommendation');
   if (el) {
-    var weaknesses = [];
-    if (dims.A <= dims.I) weaknesses.push('分析型');
-    if (dims.I < dims.A) weaknesses.push('直觉型');
-    if (dims.R <= dims.T) weaknesses.push('关系导向');
-    if (dims.T < dims.R) weaknesses.push('任务导向');
-    var priority = weaknesses.length > 0 ? '高' : '中';
-    el.innerHTML = '<div class="recommendation-title">📌 招聘建议（优先级：' + priority + '）</div>' +
-      '<div class="recommendation-content">' +
-      '<strong>优先招聘类型：</strong>' + (weaknesses.join(' + ') || '团队配置均衡，暂无明显短板') + '<br>' +
-      '<strong>岗位建议：</strong>根据团队短板匹配对应岗位<br>' +
-      '<strong>面试考察：</strong>重点考察候选人在短板维度的能力</div>';
+    // 短板排序：少数派人数少的优先
+    var weaknessList = [];
+    var dimWeaknesses = [
+      [dims.I, dims.A, 'I', '直觉型', {
+        profile: 'ITCP（社交牛人）或 IRCP（机会捕手）',
+        interview: '场景模拟：面对全新供应商品类，如何在信息不足时做出判断？',
+        jobs: ['市场情报岗', '创新采购岗']
+      }],
+      [dims.T, dims.R, 'T', '任务型', {
+        profile: 'ATCD（市场猎手）或 ITCD（变色龙）',
+        interview: '案例分析：如何在 3 天内完成一项成本削减 15% 的紧急采购任务？',
+        jobs: ['战略寻源岗', '项目采购岗']
+      }],
+      [dims.B, dims.C, 'B', '合作型', {
+        profile: 'ARBP（流程管家）或 IRBP（和事佬）',
+        interview: '情景测试：供应商要求涨价 20%，如何在坚持底线的同时维护长期合作关系？',
+        jobs: ['供应商关系岗', '战略合作岗']
+      }],
+      [dims.P, dims.D, 'P', '开拓型', {
+        profile: 'ARCP（关系达人）或 IRCP（机会捕手）',
+        interview: '案例分析：如何在一个传统品类中发现新的采购机会并推动落地？',
+        jobs: ['品类创新岗', '数字化采购岗']
+      }]
+    ];
+    dimWeaknesses.forEach(function(d) {
+      if (d[0] < d[1]) {
+        var names = [];
+        if (typeof window !== 'undefined' && window.teamReportData) {
+          var letter = d[2];
+          var idx;
+          if (letter === 'I') idx = 0; else if (letter === 'T') idx = 1; else if (letter === 'B') idx = 2; else idx = 3;
+          window.teamReportData.members.forEach(function(m) { if (m.code[idx] === letter) names.push(m.name); });
+        }
+        weaknessList.push({
+          type: d[3], letter: d[2], count: d[0], pct: Math.round(d[0] / n * 100),
+          names: names, info: d[4]
+        });
+      }
+    });
+
+    if (weaknessList.length > 0) {
+      var priority = weaknessList.length >= 3 ? '紧急' : weaknessList.length >= 2 ? '高' : '中';
+      var html = '<div class="recommendation-title">📌 招聘建议（优先级：' + priority + '）</div><div class="recommendation-content">';
+      html += '<strong>优先招聘类型：</strong>';
+      var typeList = weaknessList.map(function(w) { return w.type + '（仅 ' + w.count + ' 人）'; });
+      html += typeList.join('、') + '<br>';
+      // 目标画像
+      html += '<strong>目标画像：</strong>';
+      html += weaknessList.map(function(w) { return w.type + ' → ' + w.info.profile; }).join('；') + '<br>';
+      // 岗位建议
+      html += '<strong>岗位建议：</strong>';
+      var jobList = weaknessList.map(function(w) { return w.info.jobs.join('、'); });
+      html += jobList.join('；') + '<br>';
+      // 面试考察
+      html += '<strong>面试考察：</strong>';
+      html += weaknessList.map(function(w) { return w.info.interview; }).join('<br>');
+      html += '</div>';
+      el.innerHTML = html;
+    } else {
+      el.innerHTML = '<div class="recommendation-title">📌 招聘建议（优先级：低）</div>' +
+        '<div class="recommendation-content">团队配置均衡，暂无明显短板。可根据业务扩展需求补充人才。</div>';
+    }
   }
 
-  // 培训建议 v2.1 — 关联姜宏锋老师具体课程
+  // ── 培训建议 v2.2 — 团队培训 + 个人发展两块 ──
   el = document.getElementById('training-recommendation');
   if (el) {
-    var trainingItems = [];
-    // 根据短板维度匹配具体课程
-    var courseMatch = calcCourseMatch(dims, n, data.courseLibrary);
-    if (courseMatch.length > 0) {
-      courseMatch.forEach(function(cm, idx) {
-        var c = cm.course;
-        trainingItems.push('<strong>推荐课程 ' + (idx + 1) + '：</strong>' + c.name + '（姜宏锋老师 · ' + (c.format || '线下课') + '）<br>→ ' + cm.matchDesc + '<br>→ 报名链接：' + c.url);
-      });
-    } else {
-      trainingItems.push('<strong>推荐课程：</strong>团队能力全面，可选择姜宏锋老师任意课程持续提升');
-      if (data.courseLibrary && data.courseLibrary.length > 0) {
-        trainingItems.push('<strong>推荐：</strong>' + data.courseLibrary[0].name + '（姜宏锋老师 · ' + (data.courseLibrary[0].format || '线下课') + '）');
+    // 团队培训：针对维度失衡
+    var teamTrain = [];
+    var dimTrain = [
+      [dims.A, dims.I, 'A-I',
+        '跨风格沟通工作坊 — 促进分析型与直觉型相互理解（推荐 DISC 或 MBTI 培训）',
+        '创新思维训练 — 提升直觉洞察能力（推荐：设计思维工作坊）',
+        '数据分析深度训练 — 提升逻辑论证能力'],
+      [dims.R, dims.T, 'R-T',
+        '关系与任务平衡工作坊 — 在维护关系的同时达成目标',
+        '敏捷决策工作坊 — 平衡风险与速度（推荐：OODA 循环训练）',
+        '供应商关系管理培训 — 提升长期合作维护能力'],
+      [dims.C, dims.B, 'C-B',
+        '竞争与合作平衡训练 — 在博弈中寻求共赢',
+        '合作共赢思维 — 建立长期合作框架',
+        '竞争谈判策略培训 — 提升博弈技巧'],
+      [dims.D, dims.P, 'D-P',
+        '风险与创新平衡工作坊 — 平衡稳健与敏捷',
+        '风险承担训练 — 在可控范围内尝试新方法',
+        '风险管控培训 — 提升风险识别和规避能力']
+    ];
+    dimTrain.forEach(function(d) {
+      if (d[0] > d[1]) {
+        teamTrain.push(d[2]);
+      } else if (d[1] > d[0]) {
+        teamTrain.push(d[2]);
       }
+    });
+
+    // 个人发展：针对少数派成员
+    var personalDev = [];
+    var dimPairs = [['A','I','分析型','直觉型'], ['R','T','关系型','任务型'], ['C','B','竞争型','合作型'], ['D','P','防御型','开拓型']];
+    var dimsObj = dims;
+    dimPairs.forEach(function(dp) {
+      var c1 = dimsObj[dp[0]];
+      var c2 = dimsObj[dp[1]];
+      if (c1 < c2) {
+        // 少数派是 dp[0]
+        personalDev.push(dp[0] + '型成员（' + dp[2] + '）：加强' + (dp[0]==='A'?'数据分析与逻辑论证':dp[0]==='I'?'创新思维与市场洞察':dp[0]==='R'?'关系维护与冲突化解':dp[0]==='T'?'任务管理与执行效率':dp[0]==='C'?'谈判博弈与底线意识':dp[0]==='B'?'合作共赢与长期关系建设':dp[0]==='D'?'风险识别与管控能力':'敏捷决策与快速响应') + '训练');
+      } else if (c2 < c1) {
+        personalDev.push(dp[1] + '型成员（' + dp[3] + '）：加强' + (dp[1]==='I'?'创新思维与市场洞察':dp[1]==='A'?'数据分析与逻辑论证':dp[1]==='T'?'任务管理与执行效率':dp[1]==='R'?'关系维护与冲突化解':dp[1]==='B'?'合作共赢与长期关系建设':dp[1]==='C'?'谈判博弈与底线意识':dp[1]==='P'?'敏捷决策与快速响应':'风险识别与管控能力') + '训练');
+      }
+    });
+
+    var html = '';
+    html += '<div class="recommendation">';
+    html += '<div class="recommendation-title">👥 团队培训</div>';
+    html += '<div class="recommendation-content">';
+    if (teamTrain.length > 0) {
+      teamTrain.forEach(function(t, i) { html += (i+1) + '. ' + t + '<br>'; });
+    } else {
+      html += '团队配置均衡，建议持续进行跨风格沟通训练。<br>';
     }
-    // 补充跨风格沟通培训
-    trainingItems.push('<strong>团队必修：</strong>跨风格沟通工作坊 — 促进 A/I、R/T、C/B、D/P 相互理解（推荐 DISC 或 MBTI 培训）');
-    var itemsHtml = trainingItems.map(function(it, idx) { return (idx + 1) + '. ' + it; }).join('<br>');
-    el.innerHTML = '<div class="recommendation-title">📚 培训建议（姜宏锋老师课程）</div>' +
-      '<div class="recommendation-content">' + itemsHtml + '</div>';
+    html += '</div></div>';
+    html += '<div class="recommendation">';
+    html += '<div class="recommendation-title">🧑‍💻 个人发展</div>';
+    html += '<div class="recommendation-content">';
+    if (personalDev.length > 0) {
+      personalDev.forEach(function(p, i) { html += (i+1) + '. ' + p + '<br>'; });
+    } else {
+      html += '团队能力全面，建议持续学习和提升。<br>';
+    }
+    html += '</div></div>';
+    el.innerHTML = html;
   }
 
   // 项目配置建议
@@ -715,7 +815,7 @@ function renderTeamReport() {
       '<div class="recommendation-content">' + h + '</div>';
   }
 
-  // ── 推荐课程 ──
+  // 推荐课程
   el = document.getElementById('courses-container');
   if (el) {
     var h = '';
