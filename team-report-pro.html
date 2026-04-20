@@ -108,8 +108,8 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 <div class="card-title pro">👥 团队概况</div>
 <div class="tag-row">
 <span class="tag" id="tag-team-size">--</span>
-<span class="tag">100% 已测试</span>
-<span id="team-type-tag" class="tag">--</span>
+<span class="tag" id="tag-tested-pct">--</span>
+<span class="tag" id="tag-team-type-label">--</span>
 </div>
 <div class="stats" style="margin-top:16px;">
 <div class="stat"><div class="stat-num" id="stat-total">--</div><div class="stat-label">总人数</div></div>
@@ -145,6 +145,12 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 <div class="card">
 <div class="card-title pro">🤝 最佳拍档配对建议</div>
 <div id="pairs-container"></div>
+</div>
+
+<!-- 未配对成员独立建议 v2.1 新增 -->
+<div class="card" id="unpaired-section" style="display:none;">
+<div class="card-title pro">💡 独立角色建议</div>
+<div id="unpaired-container"></div>
 </div>
 
 <!-- 团队成员画像 -->
@@ -193,12 +199,6 @@ body{background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);color:#fff;font-
 document.addEventListener('DOMContentLoaded', function() {
   if (typeof window.renderTeamReport === 'function') {
     window.renderTeamReport();
-  }
-  // 更新团队类型 tag
-  if (typeof window.calcTeamType === 'function' && window.teamReportData) {
-    var tt = window.calcTeamType(window.teamReportData.members);
-    var el = document.getElementById('team-type-tag');
-    if (el) el.textContent = tt.type;
   }
 });
 </script>
