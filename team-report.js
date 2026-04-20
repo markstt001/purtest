@@ -453,8 +453,17 @@ function calcProjectConfig(members, dims) {
 
   // 供应商谈判：多角色协作 — 关系建立 + 数据支撑 + 条款博弈
   var relLead = relaters.length > 0 ? relaters[0].name : '关系型成员';
-  var dataSup = (analyzers.length > 0 && analyzers[0].name !== relLead) ? analyzers[0].name : (analyzers.length > 0 ? analyzers[0].name : '');
-  var compNego = (competitors.length > 0 && competitors[0].name !== relLead && (!dataSup || competitors[0].name !== dataSup)) ? competitors[0].name : '';
+  var negoAssigned = {};
+  negoAssigned[relLead] = true;
+  var dataSup = '';
+  for (var di = 0; di < analyzers.length; di++) {
+    if (!negoAssigned[analyzers[di].name]) { dataSup = analyzers[di].name; negoAssigned[dataSup] = true; break; }
+  }
+  if (!dataSup && analyzers.length > 0) { dataSup = analyzers[0].name; negoAssigned[dataSup] = true; }
+  var compNego = '';
+  for (var ci = 0; ci < competitors.length; ci++) {
+    if (!negoAssigned[competitors[ci].name]) { compNego = competitors[ci].name; negoAssigned[compNego] = true; break; }
+  }
   var negoParts = [relLead + '主导关系建立'];
   if (dataSup) negoParts.push(dataSup + '负责数据支撑');
   if (compNego) negoParts.push(compNego + '负责条款博弈');
@@ -462,25 +471,52 @@ function calcProjectConfig(members, dims) {
 
   // 创新试点：直觉型 + 开拓型协作
   if (intuitives.length > 0) {
+    var innAssigned = {};
     var innLead = intuitives[0].name;
-    var innPartner = (pioneers.length > 0 && pioneers[0].name !== innLead) ? pioneers[0].name :
-                     (cooperators.length > 0 && cooperators[0].name !== innLead) ? cooperators[0].name : '';
+    innAssigned[innLead] = true;
+    var innPartner = '';
+    for (var pi = 0; pi < pioneers.length; pi++) {
+      if (!innAssigned[pioneers[pi].name]) { innPartner = pioneers[pi].name; innAssigned[innPartner] = true; break; }
+    }
+    if (!innPartner) {
+      for (var coi = 0; coi < cooperators.length; coi++) {
+        if (!innAssigned[cooperators[coi].name]) { innPartner = cooperators[coi].name; innAssigned[innPartner] = true; break; }
+      }
+    }
     suggestions.push('<strong>创新试点项目：</strong>' + innLead + '牵头' + (innPartner ? '，' + innPartner + '把控流程风险' : '') + ' — 洞察驱动创新');
   }
 
   // 成本削减：竞争型 + 任务型协作
   if (competitors.length > 0) {
+    var costAssigned = {};
     var costLead = competitors.length > 1 ? competitors[1].name : competitors[0].name;
-    var costPartner = (taskers.length > 0 && taskers[0].name !== costLead) ? taskers[0].name :
-                      (analyzers.length > 0 && analyzers[0].name !== costLead) ? analyzers[0].name : '';
+    costAssigned[costLead] = true;
+    var costPartner = '';
+    for (var ti = 0; ti < taskers.length; ti++) {
+      if (!costAssigned[taskers[ti].name]) { costPartner = taskers[ti].name; costAssigned[costPartner] = true; break; }
+    }
+    if (!costPartner) {
+      for (var ai = 0; ai < analyzers.length; ai++) {
+        if (!costAssigned[analyzers[ai].name]) { costPartner = analyzers[ai].name; costAssigned[costPartner] = true; break; }
+      }
+    }
     suggestions.push('<strong>成本削减项目：</strong>' + costLead + '牵头' + (costPartner ? '，' + costPartner + '推进执行' : '') + ' — 博弈与效率并重');
   }
 
   // 战略供应商管理：合作型主导，关系型配合
   if (cooperators.length > 0) {
+    var stratAssigned = {};
     var stratLead = cooperators[0].name;
-    var stratPartner = (relaters.length > 0 && relaters[0].name !== stratLead) ? relaters[0].name :
-                       (intuitives.length > 0 && intuitives[0].name !== stratLead) ? intuitives[0].name : '';
+    stratAssigned[stratLead] = true;
+    var stratPartner = '';
+    for (var ri = 0; ri < relaters.length; ri++) {
+      if (!stratAssigned[relaters[ri].name]) { stratPartner = relaters[ri].name; stratAssigned[stratPartner] = true; break; }
+    }
+    if (!stratPartner) {
+      for (var ii = 0; ii < intuitives.length; ii++) {
+        if (!stratAssigned[intuitives[ii].name]) { stratPartner = intuitives[ii].name; stratAssigned[stratPartner] = true; break; }
+      }
+    }
     suggestions.push('<strong>战略供应商管理：</strong>' + stratLead + '主导' + (stratPartner ? '，' + stratPartner + '配合维护高层关系' : '') + ' — 长期共赢');
   }
 
@@ -628,9 +664,10 @@ function renderTeamReport() {
     if (unpairedAdvice && unpairedAdvice.length > 0) {
       var h = '';
       unpairedAdvice.forEach(function(u) {
-        h += '<div class="pair">' +
-          '<div class="pair-title">' + u.animal + ' ' + u.name + ' · ' + u.code + ' ' + u.style + ' — 独立角色建议</div>' +
-          '<div class="pair-reason">' +
+        h += '<div class="pair" style="text-align:center;">' +
+          '<div class="pair-title" style="text-align:center;font-size:28px;margin-bottom:8px;">' + u.animal + ' ' + u.name + ' · ' + u.code + ' ' + u.style + '</div>' +
+          '<div style="font-size:12px;color:#86868b;margin-bottom:16px;">独立角色建议</div>' +
+          '<div class="pair-reason" style="text-align:left;">' +
           '<strong>独特价值：</strong>' + u.value + '<br><br>' +
           '<strong>协作建议：</strong>' + u.advice +
           '</div></div>';
@@ -769,19 +806,41 @@ function renderTeamReport() {
       }
     });
 
-    // 个人发展：针对少数派成员
+    // 个人发展：针对少数派成员，按具体人名分组
     var personalDev = [];
-    var dimPairs = [['A','I','分析型','直觉型'], ['R','T','关系型','任务型'], ['C','B','竞争型','合作型'], ['D','P','防御型','开拓型']];
+    var dimPairs = [
+      ['A','I','分析型','直觉型','数据分析与逻辑论证','创新思维与市场洞察'],
+      ['R','T','关系型','任务型','关系维护与冲突化解','任务管理与执行效率'],
+      ['C','B','竞争型','合作型','谈判博弈与底线意识','合作共赢与长期关系建设'],
+      ['D','P','防御型','开拓型','风险识别与管控能力','敏捷决策与快速响应']
+    ];
     var dimsObj = dims;
     dimPairs.forEach(function(dp) {
       var c1 = dimsObj[dp[0]];
       var c2 = dimsObj[dp[1]];
+      var minorityLetter, majorityLetter, training;
       if (c1 < c2) {
-        // 少数派是 dp[0]
-        personalDev.push(dp[0] + '型成员（' + dp[2] + '）：加强' + (dp[0]==='A'?'数据分析与逻辑论证':dp[0]==='I'?'创新思维与市场洞察':dp[0]==='R'?'关系维护与冲突化解':dp[0]==='T'?'任务管理与执行效率':dp[0]==='C'?'谈判博弈与底线意识':dp[0]==='B'?'合作共赢与长期关系建设':dp[0]==='D'?'风险识别与管控能力':'敏捷决策与快速响应') + '训练');
+        minorityLetter = dp[0];
+        training = dp[4];
       } else if (c2 < c1) {
-        personalDev.push(dp[1] + '型成员（' + dp[3] + '）：加强' + (dp[1]==='I'?'创新思维与市场洞察':dp[1]==='A'?'数据分析与逻辑论证':dp[1]==='T'?'任务管理与执行效率':dp[1]==='R'?'关系维护与冲突化解':dp[1]==='B'?'合作共赢与长期关系建设':dp[1]==='C'?'谈判博弈与底线意识':dp[1]==='P'?'敏捷决策与快速响应':'风险识别与管控能力') + '训练');
+        minorityLetter = dp[1];
+        training = dp[5];
+      } else {
+        return; // 均衡，不需要
       }
+      // 找出少数派具体是谁
+      var minorityNames = [];
+      if (typeof window !== 'undefined' && window.teamReportData) {
+        var idx;
+        if (minorityLetter === 'A' || minorityLetter === 'I') idx = 0;
+        else if (minorityLetter === 'R' || minorityLetter === 'T') idx = 1;
+        else if (minorityLetter === 'C' || minorityLetter === 'B') idx = 2;
+        else idx = 3;
+        window.teamReportData.members.forEach(function(m) {
+          if (m.code[idx] === minorityLetter) minorityNames.push(m.name);
+        });
+      }
+      personalDev.push(minorityNames.join('/') + '：加强' + training + '训练');
     });
 
     var html = '';
